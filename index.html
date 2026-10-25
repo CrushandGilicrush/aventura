@@ -3,475 +3,955 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aventura Conversacional</title>
+    <title>La Aventura Original - Narrativa Integrada</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'monospace'],
+                        pixel: ['"Press Start 2P"', 'cursive'],
+                    },
+                    colors: {
+                        retro: {
+                            bg: '#080b10',
+                            panel: '#101622',
+                            border: '#1e293b',
+                            green: '#33ff57',
+                            amber: '#ffb000',
+                            cyan: '#00f0ff',
+                            magenta: '#ff007f',
+                            purple: '#c084fc',
+                            dim: '#64748b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root {
-            --bg-color: #0c0d12;
-            --panel-bg: #14161f;
-            --border-color: #2a2e3d;
-            --text-color: #d1d5db;
-            --accent-green: #10b981;
-            --accent-gold: #f59e0b;
-            --accent-blue: #3b82f6;
-            --font-family: 'Courier New', Courier, monospace;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: var(--font-family);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+            background-color: #05080c;
+            color: #cbd5e1;
+            font-family: 'Fira Code', monospace;
         }
 
-        .container {
-            width: 100%;
-            max-width: 900px;
-            background-color: var(--panel-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            overflow: hidden;
+        /* CRT Filter Effects */
+        .crt-overlay::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 20;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
         }
 
-        .header {
-            background-color: #1a1d29;
-            padding: 12px 20px;
-            border-bottom: 2px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .glow-green { text-shadow: 0 0 8px rgba(51, 255, 87, 0.6); }
+        .glow-cyan { text-shadow: 0 0 8px rgba(0, 240, 255, 0.6); }
+        .glow-amber { text-shadow: 0 0 8px rgba(255, 176, 0, 0.6); }
+        .glow-purple { text-shadow: 0 0 8px rgba(192, 132, 252, 0.6); }
 
-        .header h1 {
-            font-size: 1.2rem;
-            color: var(--accent-green);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .main-layout {
-            display: flex;
-            flex-direction: column;
-        }
-
-        @media (min-width: 768px) {
-            .main-layout {
-                display: grid;
-                grid-template-columns: 2fr 1fr;
-            }
-        }
-
-        .terminal-panel {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        @media (min-width: 768px) {
-            .terminal-panel {
-                border-bottom: none;
-                border-right: 2px solid var(--border-color);
-            }
-        }
-
-        .log-area {
-            height: 380px;
-            overflow-y: auto;
-            background-color: #08090c;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 15px;
-            margin-bottom: 15px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .log-entry {
-            margin-bottom: 12px;
-            white-space: pre-wrap;
-        }
-
-        .log-entry.system {
-            color: #888;
-        }
-
-        .log-entry.player {
-            color: var(--accent-blue);
-            font-weight: bold;
-        }
-
-        .log-entry.npc {
-            color: var(--accent-gold);
-        }
-
-        .log-entry.room-title {
-            color: var(--accent-green);
-            font-weight: bold;
-            font-size: 1.1rem;
-            border-bottom: 1px dashed var(--accent-green);
-            padding-bottom: 4px;
-            margin-top: 10px;
-        }
-
-        .input-form {
-            display: flex;
-            gap: 10px;
-        }
-
-        .input-form input {
-            flex: 1;
-            background-color: #08090c;
-            border: 1px solid var(--border-color);
-            color: #fff;
-            padding: 10px 15px;
-            font-family: inherit;
-            border-radius: 4px;
-            outline: none;
-        }
-
-        .input-form input:focus {
-            border-color: var(--accent-green);
-        }
-
-        .input-form button {
-            background-color: var(--accent-green);
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            font-family: inherit;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .input-form button:hover {
-            opacity: 0.9;
-        }
-
-        .sidebar {
-            padding: 20px;
-            background-color: #11131a;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .panel-block {
-            background-color: #171922;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 12px;
-        }
-
-        .panel-block h3 {
-            font-size: 0.9rem;
-            color: var(--accent-green);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .inventory-list {
-            list-style: none;
-            font-size: 0.85rem;
-        }
-
-        .inventory-list li {
-            padding: 4px 0;
-            border-bottom: 1px solid #222533;
-        }
-
-        .inventory-list li:last-child {
-            border-bottom: none;
-        }
-
-        .help-text {
-            font-size: 0.8rem;
-            color: #888;
-            line-height: 1.4;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #080b10; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
     </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden p-2 md:p-4 select-none">
 
-<div class="container">
-    <div class="header">
-        <h1>Aventura Conversacional</h1>
-        <span style="font-size: 0.8rem; color: #666;">Sin IA - 100% Privado</span>
-    </div>
-
-    <div class="main-layout">
-        <div class="terminal-panel">
-            <div class="log-area" id="logArea"></div>
-            <form class="input-form" id="inputForm">
-                <input type="text" id="userInput" placeholder="Escribe un comando o habla..." autocomplete="off" autofocus>
-                <button type="submit">Enviar</button>
-            </form>
+    <!-- HEADER / TOP NAVIGATION -->
+    <header class="flex justify-between items-center bg-retro-panel border-2 border-retro-border p-3 rounded-xl mb-3 shadow-xl shrink-0">
+        <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-terminal text-retro-cyan text-xl glow-cyan animate-pulse"></i>
+            <div>
+                <h1 class="font-pixel text-xs sm:text-sm md:text-base text-retro-green glow-green tracking-wider">
+                    LA AVENTURA ORIGINAL <span class="text-xs text-retro-cyan font-mono">[MOTOR NARRATIVO INTEGRADO]</span>
+                </h1>
+            </div>
         </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleEditor('visual')" class="px-3 py-1.5 bg-retro-border hover:bg-retro-purple hover:text-white text-retro-purple text-xs font-bold rounded-lg transition-all flex items-center space-x-1 border border-retro-purple/40">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span class="hidden sm:inline">Editor Visual</span>
+            </button>
+            <button onclick="toggleEditor('json')" class="px-3 py-1.5 bg-retro-border hover:bg-retro-cyan hover:text-black text-retro-cyan text-xs font-bold rounded-lg transition-all flex items-center space-x-1 border border-retro-cyan/40">
+                <i class="fa-solid fa-code"></i>
+                <span class="hidden sm:inline">Editor JSON</span>
+            </button>
+            <button onclick="resetGame()" title="Reiniciar Juego" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold rounded-lg transition-all border border-red-800/50">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
 
-        <div class="sidebar">
-            <div class="panel-block">
-                <h3>Inventario</h3>
-                <ul class="inventory-list" id="inventoryList">
-                    <li>(Vacío)</li>
-                </ul>
+    <!-- MAIN GAME WORKSPACE -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0 crt-overlay relative">
+        
+        <!-- LEFT COLUMN: Scene Viewport & Narrative Terminal -->
+        <main class="lg:col-span-8 flex flex-col space-y-3 min-h-0">
+            
+            <!-- Scene Viewport -->
+            <div class="relative h-44 sm:h-52 md:h-56 bg-black rounded-xl border-2 border-retro-border overflow-hidden shrink-0 shadow-lg group">
+                <img id="scene-image" src="" alt="Escena" class="w-full h-full object-cover transition-opacity duration-500 opacity-85" onerror="handleImageError(this)">
+                <div class="absolute inset-0 bg-gradient-to-t from-retro-panel via-transparent to-black/30"></div>
+                
+                <!-- Location Badge -->
+                <div class="absolute top-3 left-3 bg-black/80 backdrop-blur-md border border-retro-cyan/50 px-3 py-1 rounded-lg text-xs font-bold text-retro-cyan flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-retro-green animate-ping"></span>
+                    <span id="room-title">Cargando ubicación...</span>
+                </div>
+
+                <!-- Navigation Shortcuts -->
+                <div id="quick-nav" class="absolute bottom-3 right-3 flex items-center space-x-1 bg-black/80 backdrop-blur p-1.5 rounded-lg border border-retro-border">
+                    <!-- Nav buttons via JS -->
+                </div>
             </div>
 
-            <div class="panel-block">
-                <h3>Comandos Útiles</h3>
-                <div class="help-text">
-                    - <b>ir [norte/sur/este/oeste]</b>: Moverte.<br>
-                    - <b>coger [objeto]</b>: Recoger objeto.<br>
-                    - <b>decir [mensaje]</b> o escribe libremente para hablar con el personaje.
+            <!-- Terminal Log -->
+            <div id="terminal" class="flex-1 bg-retro-panel border-2 border-retro-border rounded-xl p-4 overflow-y-auto space-y-3 font-mono text-xs sm:text-sm leading-relaxed shadow-inner">
+                <!-- Log entries dynamically appended here -->
+            </div>
+
+            <!-- Command Bar -->
+            <div class="bg-retro-panel border-2 border-retro-border rounded-xl p-2.5 flex items-center space-x-2 shrink-0 focus-within:border-retro-cyan transition-colors shadow-lg">
+                <span class="text-retro-green font-bold text-lg glow-green pl-1">></span>
+                <input type="text" id="command-input" placeholder="Escribe un comando o responde al personaje (ej: 'ir norte', 'dame la antorcha', 'hola')..." 
+                       class="w-full bg-transparent border-none text-retro-green font-mono text-xs sm:text-sm focus:outline-none placeholder-retro-dim/50"
+                       autocomplete="off">
+                <button onclick="processCommandFromInput()" class="px-4 py-2 bg-retro-cyan text-black font-bold rounded-lg text-xs hover:bg-retro-green transition-colors flex items-center space-x-1">
+                    <span>ENVIAR</span>
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- RIGHT COLUMN: Visual Inventory & Quick Direction Actions -->
+        <aside class="lg:col-span-4 flex flex-col space-y-3 min-h-0">
+            
+            <!-- Visual Inventory -->
+            <div class="bg-retro-panel border-2 border-retro-border rounded-xl p-3 flex flex-col h-1/2 min-h-0">
+                <div class="flex justify-between items-center border-b border-retro-border pb-2 mb-2">
+                    <h2 class="text-xs font-pixel text-retro-amber glow-amber flex items-center space-x-2">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <span>INVENTARIO</span>
+                    </h2>
+                    <span id="inventory-count" class="text-xs text-retro-dim">0 objetos</span>
+                </div>
+                <div id="inventory-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                    <!-- Dynamic Inventory items -->
+                </div>
+            </div>
+
+            <!-- Context Quick Direction Actions -->
+            <div class="bg-retro-panel border-2 border-retro-border rounded-xl p-3 flex flex-col h-1/2 min-h-0">
+                <div class="border-b border-retro-border pb-2 mb-2">
+                    <h2 class="text-xs font-pixel text-retro-cyan glow-cyan flex items-center space-x-2">
+                        <i class="fa-solid fa-compass"></i>
+                        <span>DIRECCIONES DISPONIBLES</span>
+                    </h2>
+                </div>
+                <div id="quick-actions" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                    <!-- Quick action direction buttons -->
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- JSON EDITOR MODAL -->
+    <div id="json-editor-modal" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col p-4 md:p-6 backdrop-blur-sm">
+        <div class="flex justify-between items-center mb-3 border-b border-retro-border pb-3">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-code text-retro-cyan text-lg"></i>
+                <h2 class="font-pixel text-xs sm:text-sm text-retro-cyan">EDITOR CÓDIGO JSON COMPLETO</h2>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="downloadStoryJSON()" class="px-3 py-1.5 bg-retro-border text-retro-cyan hover:bg-retro-cyan hover:text-black font-bold text-xs rounded-lg transition-colors">
+                    <i class="fa-solid fa-download mr-1"></i> Exportar JSON
+                </button>
+                <button onclick="saveJSONEditor()" class="px-3 py-1.5 bg-retro-green text-black font-bold text-xs rounded-lg hover:opacity-90 transition-opacity">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i> Aplicar Cambios
+                </button>
+                <button onclick="toggleEditor('json')" class="px-3 py-1.5 bg-retro-border text-retro-dim font-bold text-xs rounded-lg hover:text-white">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+        <textarea id="json-editor-textarea" class="flex-1 bg-black text-retro-green font-mono text-xs p-4 rounded-xl border border-retro-border focus:outline-none focus:border-retro-cyan resize-none"></textarea>
+    </div>
+
+    <!-- VISUAL NARRATIVE EDITOR MODAL -->
+    <div id="visual-editor-modal" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col p-3 md:p-6 backdrop-blur-sm">
+        <div class="flex justify-between items-center mb-3 border-b border-retro-border pb-3">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-pen-to-square text-retro-purple text-lg"></i>
+                <h2 class="font-pixel text-xs sm:text-sm text-retro-purple">EDITOR VISUAL DE LA AVENTURA</h2>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="saveVisualEditor()" class="px-4 py-1.5 bg-retro-purple text-white font-bold text-xs rounded-lg hover:bg-purple-600 transition-colors">
+                    <i class="fa-solid fa-check mr-1"></i> Guardar Todo
+                </button>
+                <button onclick="toggleEditor('visual')" class="px-3 py-1.5 bg-retro-border text-retro-dim font-bold text-xs rounded-lg hover:text-white">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+
+        <!-- Editor Tabs -->
+        <div class="flex space-x-2 border-b border-retro-border pb-2 mb-4">
+            <button onclick="switchEditorTab('rooms')" id="tab-btn-rooms" class="px-4 py-2 rounded-lg text-xs font-bold bg-retro-purple text-white">Habitaciones</button>
+            <button onclick="switchEditorTab('npcs')" id="tab-btn-npcs" class="px-4 py-2 rounded-lg text-xs font-bold bg-retro-border text-retro-dim">Personajes y Palabras Clave</button>
+            <button onclick="switchEditorTab('items')" id="tab-btn-items" class="px-4 py-2 rounded-lg text-xs font-bold bg-retro-border text-retro-dim">Objetos</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+            <!-- ROOMS TAB -->
+            <div id="tab-content-rooms" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-pixel text-retro-green">HABITACIONES DEL MUNDO</h3>
+                    <button onclick="addNewRoomPrompt()" class="px-3 py-1 bg-retro-green/20 text-retro-green border border-retro-green/40 rounded text-xs hover:bg-retro-green hover:text-black font-bold">
+                        + Nueva Habitación
+                    </button>
+                </div>
+                <div id="visual-rooms-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Room Forms -->
+                </div>
+            </div>
+
+            <!-- NPCS & KEYWORD DIALOGUES TAB -->
+            <div id="tab-content-npcs" class="space-y-4 hidden">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-pixel text-retro-purple">PERSONAJES Y REGLAS DE RESPUESTA</h3>
+                    <button onclick="addNewNpcPrompt()" class="px-3 py-1 bg-retro-purple/20 text-retro-purple border border-retro-purple/40 rounded text-xs hover:bg-retro-purple hover:text-white font-bold">
+                        + Nuevo Personaje
+                    </button>
+                </div>
+                <div id="visual-npcs-container" class="space-y-6">
+                    <!-- Dynamic NPC Forms -->
+                </div>
+            </div>
+
+            <!-- ITEMS TAB -->
+            <div id="tab-content-items" class="space-y-4 hidden">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-pixel text-retro-amber">OBJETOS DEL JUEGO</h3>
+                    <button onclick="addNewItemPrompt()" class="px-3 py-1 bg-retro-amber/20 text-retro-amber border border-retro-amber/40 rounded text-xs hover:bg-retro-amber hover:text-black font-bold">
+                        + Nuevo Objeto
+                    </button>
+                </div>
+                <div id="visual-items-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Item Forms -->
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-// ==========================================
-// 1. BASE DE DATOS DEL JUEGO (NARRATIVA)
-// ==========================================
-
-const HABITACIONES = {
-    "entrada": {
-        nombre: "Entrada del Templo",
-        descripcion: "Te encuentras ante la imponente entrada de un antiguo templo de piedra. La humedad llena el aire.",
-        salidas: { norte: "vestibulo" },
-        objetos: ["salvoconducto"],
-        personaje: null
-    },
-    "vestibulo": {
-        nombre: "Gran Vestíbulo",
-        descripcion: "Una amplia sala abovedada iluminada por antorchas en las paredes.",
-        salidas: { sur: "entrada", este: "biblioteca" },
-        objetos: [],
-        personaje: "guardia"
-    },
-    "biblioteca": {
-        nombre: "Biblioteca Olvidada",
-        descripcion: "Estanterías repletas de tomos antiguos y polvorientos.",
-        salidas: { oeste: "vestibulo" },
-        objetos: ["libro_antiguo"],
-        personaje: null
-    }
-};
-
-const PERSONAJES = {
-    "guardia": {
-        nombre: "Guardia del Templo",
-        saludo: "Un guardia con armadura pesada cruza los brazos y te observa fijamente al entrar.",
-        dialogos: [
-            {
-                keywords: ["hola", "saludos", "buenas", "quien"],
-                response: "El guardia murmura: 'Soy el custodio de este templo. Mantén las manos donde pueda verlas.'"
+    <!-- ENGINE JAVASCRIPT LOGIC -->
+    <script>
+        // GAME DATASET WITH INTEGRATED NARRATIVE DIALOGUE RULES
+        const initialGameData = {
+            rooms: {
+                "entrada": {
+                    nombre: "Entrada del Templo Antiguo",
+                    descripcion: "Te encuentras ante las majestuosas ruinas de un templo olvidado. Grandes estatuas de piedra custodian la arcada principal. Al este, un camino estrecho conduce a un jardín de estatuas.",
+                    imagen: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1000&q=80",
+                    svgFallback: "temple",
+                    salidas: { norte: "vestibulo", este: "jardin" },
+                    objetos: [],
+                    personajes: ["guardian"]
+                },
+                "vestibulo": {
+                    nombre: "Gran Vestíbulo Abovedado",
+                    descripcion: "Un inmenso salón donde el eco resuena con cada paso. Columnas de mármol sostienen un techo abovedado. Hacia el norte divisas una gran biblioteca en penumbras.",
+                    imagen: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80",
+                    svgFallback: "hall",
+                    salidas: { sur: "entrada", norte: "biblioteca" },
+                    objetos: [],
+                    personajes: []
+                },
+                "biblioteca": {
+                    nombre: "Biblioteca del Sabio Espectro",
+                    descripcion: "Miles de tomos antiguos flotan sutilmente en estanterías polvorientas. La luz de la luna atraviesa un rosetón roto iluminando el centro de la estancia.",
+                    imagen: "https://images.unsplash.com/photo-1507842237312-b257a0520698?auto=format&fit=crop&w=1000&q=80",
+                    svgFallback: "library",
+                    salidas: { sur: "vestibulo", este: "galeria_secreta" },
+                    objetos: ["diario"],
+                    personajes: ["sabio"]
+                },
+                "jardin": {
+                    nombre: "Jardín de las Estatuas",
+                    descripcion: "Un rincón silvestre cubierto de enredaderas y flores luminiscentes. Un estanque de aguas cristalinas refleja las estrellas.",
+                    imagen: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80",
+                    svgFallback: "garden",
+                    salidas: { oeste: "entrada" },
+                    objetos: ["llave_dorada"],
+                    personajes: []
+                },
+                "galeria_secreta": {
+                    nombre: "Galería Secreta de Reliquias",
+                    descripcion: "Una cámara oculta llena de cofres dorados e instrumentos alquímicos. ¡Has descubierto el secreto más guardado del templo!",
+                    imagen: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80",
+                    svgFallback: "treasury",
+                    salidas: { oeste: "biblioteca" },
+                    objetos: ["gema_ancestral"],
+                    personajes: []
+                }
             },
-            {
-                keywords: ["llave", "puerta", "pasar", "entrar", "abrir"],
-                response: "El guardia niega con la cabeza: 'La puerta interior está cerrada. Necesitas mostrarme un salvoconducto para pasar.'"
+            items: {
+                "antorcha": { nombre: "Antorcha Encendida", icono: "fa-fire", desc: "Arde con una llama brillante. Ilumina las estancias más oscuras." },
+                "llave_dorada": { nombre: "Llave Dorada", icono: "fa-key", desc: "Una ornamentada llave hecha de oro puro con runas grabadas." },
+                "diario": { nombre: "Diario del Explorador", icono: "fa-book", desc: "Contiene anotaciones sobre los misterios y acertijos del templo." },
+                "gema_ancestral": { nombre: "Gema Ancestral", icono: "fa-gem", desc: "Un rubí mágico que emite un pulso de luz hipnótico." }
             },
-            {
-                keywords: ["salvoconducto", "permiso", "papel", "pase"],
-                response: "El guardia examina el documento detenidamente: 'Todo parece estar en regla. Toma la llave de bronce.'",
-                itemRequired: "salvoconducto",
-                itemGiven: "llave_bronce"
+            npcs: {
+                "guardian": {
+                    nombre: "Guardia del Templo",
+                    rol: "Custodio de las Ruinas",
+                    saludoInicial: "Un firme Guardia apoyado en su gran mandoble te observa llegar. Ajusta su armadura y te dice: \"Alto ahí, viajero. Custodio la entrada a estas ruinas ancestrales. ¿Qué pretendes buscar aquí?\"",
+                    respuestaDefecto: "El Guardia del Templo frunce el ceño, apoya su mano en la empuñadura de la espada y responde: \"No entiendo qué me estás diciendo con esas palabras, viajero. Háblame con claridad.\"",
+                    reglasDialogo: [
+                        {
+                            palabrasClave: ["hola", "buenas", "saludos", "dias", "tardes"],
+                            respuesta: "El Guardia asiente solemnemente con la cabeza: \"Saludos. Pocos son los que se atreven a pisar la entrada del templo hoy en día. Ten mucho cuidado ahí dentro.\""
+                        },
+                        {
+                            palabrasClave: ["pasar", "entrar", "puerta", "vestibulo", "adelante", "caminar"],
+                            respuesta: "El Guardia da un paso al lado y señala el gran portal: \"El paso al vestíbulo hacia el norte está libre. Pero te advierto que la biblioteca más lejana alberga sombras y misterios.\""
+                        },
+                        {
+                            palabrasClave: ["antorcha", "luz", "fuego", "oscuridad", "iluminar", "lampara"],
+                            respuesta: "El Guardia coge una antorcha encendida de la pared y te la entrega con firmeza: \"Toma esta antorcha. Su luz te librará de perderte en la oscuridad de las estancias profundas.\"",
+                            entregarObjeto: "antorcha"
+                        },
+                        {
+                            palabrasClave: ["llave", "tesoro", "oro", "secreto", "galeria"],
+                            respuesta: "El Guardia susurra bajando la voz: \"Si lo que buscas es el tesoro ancestral, deberás consultar con el Sabio Espectro que mora en la Biblioteca al norte.\""
+                        },
+                        {
+                            palabrasClave: ["soborno", "dinero", "moneda", "pagar", "comprar"],
+                            respuesta: "El Guardia se yergue con indignación: \"¡Mi honor no se compra con unas simples monedas! Respeta las leyes de este lugar sagrado.\""
+                        }
+                    ]
+                },
+                "sabio": {
+                    nombre: "Espectro Sabio",
+                    rol: "Espíritu de la Biblioteca",
+                    saludoInicial: "Entre los tomos flotantes, la figura etérea de un anciano se materializa. Se acerca flotando silenciosamente y te susurra: \"Shhh... Habla en voz baja, viajero. Estás en la gran biblioteca del conocimiento. ¿Qué secreto buscas entre estos tomos?\"",
+                    respuestaDefecto: "El Espectro Sabio pasa las páginas flotantes de un grimorio con un leve gesto y murmura: \"Tus palabras no encuentran eco en estos tomos. Pregúntame sobre la llave, la historia o el tesoro secreto.\"",
+                    reglasDialogo: [
+                        {
+                            palabrasClave: ["llave", "puerta", "abrir", "galeria", "candado", "cerradura"],
+                            requiereObjeto: "llave_dorada",
+                            respuesta: "El Sabio sonríe gratamente al ver el destello en tus manos: \"¡Ah! Veo que posees la Llave Dorada del Jardín. Con ella podrás abrir la puerta oriental hacia la Galería Secreta de Reliquias.\""
+                        },
+                        {
+                            palabrasClave: ["llave", "puerta", "abrir", "galeria", "candado", "cerradura"],
+                            respuesta: "El Sabio flotante reflexiona un momento: \"Para abrir el paso a la Galería Secreta necesitas la Llave Dorada. Se halla oculta en el Jardín de las Estatuas, al este de la entrada principal.\""
+                        },
+                        {
+                            palabrasClave: ["historia", "quien", "templo", "origen", "sabio", "fantasma", "espiritu"],
+                            respuesta: "El espectro adquiere un tono melancólico: \"Fui el Gran Archivero de esta civilización. Cuando el templo colapsó, mi alma quedó ligada a la custodia eterna de esta biblioteca.\""
+                        },
+                        {
+                            palabrasClave: ["tesoro", "gema", "reliquia", "oro", "premio"],
+                            respuesta: "El Sabio señala hacia la pared este: \"El tesoro supremo es la Gema Ancestral. Yace en la Galería Secreta tras la puerta sellada.\""
+                        },
+                        {
+                            palabrasClave: ["gracias", "adios", "hasta luego", "saludos"],
+                            respuesta: "El Sabio se inclina levemente: \"Que la luz de la sabiduría ilumine tu camino por las sombras del templo.\""
+                        }
+                    ]
+                }
             }
-        ],
-        respuestaDefecto: "El guardia te mira en silencio y no responde a tus palabras."
-    }
-};
+        };
 
-const DESCRIPCION_OBJETOS = {
-    "salvoconducto": "Un documento oficial sellado con cera roja.",
-    "libro_antiguo": "Un tomo encuadernado en cuero gastado.",
-    "llave_bronce": "Una llave pesada de bronce con adornos."
-};
+        // Engine State Variables
+        let gameData = JSON.parse(JSON.stringify(initialGameData));
+        let currentRoomId = "entrada";
+        let inventory = [];
 
-// ==========================================
-// 2. ESTADO DEL JUEGO
-// ==========================================
+        // Application Initialization
+        window.onload = function() {
+            appendLog("SISTEMA NARRATIVO RETRO INICIADO.", "system");
+            appendLog("Puedes moverte con comandos de dirección ('ir norte', 'este') o responder directamente a los personajes en el texto.", "system");
+            renderRoom();
 
-let estado = {
-    habitacionActual: "entrada",
-    inventario: []
-};
+            // Keyboard Bindings
+            document.getElementById('command-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') processCommandFromInput();
+            });
+        };
 
-// ==========================================
-// 3. FUNCIONES DE INTERFAZ (UI)
-// ==========================================
+        // RENDER ROOM ENGINE
+        function renderRoom() {
+            const room = gameData.rooms[currentRoomId];
+            if (!room) return;
 
-const logArea = document.getElementById("logArea");
-const userInput = document.getElementById("userInput");
-const inputForm = document.getElementById("inputForm");
-const inventoryList = document.getElementById("inventoryList");
+            document.getElementById('room-title').innerText = room.nombre;
 
-function agregarLog(texto, tipo = "") {
-    const entry = document.createElement("div");
-    entry.className = `log-entry ${tipo}`;
-    entry.innerText = texto;
-    logArea.appendChild(entry);
-    logArea.scrollTop = logArea.scrollHeight;
-}
+            // Room Image Viewport
+            const imgEl = document.getElementById('scene-image');
+            imgEl.dataset.fallback = room.svgFallback || "temple";
+            imgEl.src = room.imagen;
 
-function actualizarInventarioUI() {
-    inventoryList.innerHTML = "";
-    if (estado.inventario.length === 0) {
-        inventoryList.innerHTML = "<li>(Vacío)</li>";
-        return;
-    }
-    estado.inventario.forEach(obj => {
-        const li = document.createElement("li");
-        li.innerText = obj;
-        inventoryList.appendChild(li);
-    });
-}
+            // 1. Log Narrative Description Entry
+            const textHtml = `<span class="text-retro-cyan font-bold">[ ${room.nombre.toUpperCase()} ]</span><br>${room.descripcion}`;
+            appendLog(textHtml, "narrative");
 
-function mostrarHabitacion() {
-    const hab = HABITACIONES[estado.habitacionActual];
-    agregarLog(`--- ${hab.nombre.toUpperCase()} ---`, "room-title");
-    agregarLog(hab.descripcion);
+            // 2. Integrated Character Initial Greeting inside Terminal Narrative
+            if (room.personajes && room.personajes.length > 0) {
+                room.personajes.forEach(npcId => {
+                    const npc = gameData.npcs[npcId];
+                    if (npc && npc.saludoInicial) {
+                        const greetingHtml = `<span class="text-retro-purple font-semibold"><i class="fa-solid fa-comment-dots mr-1"></i>${npc.saludoInicial}</span>`;
+                        appendLog(greetingHtml, "dialogue");
+                    }
+                });
+            }
 
-    if (hab.objetos.length > 0) {
-        agregarLog(`Objetos en este lugar: ${hab.objetos.join(", ")}`, "system");
-    }
-
-    const salidas = Object.keys(hab.salidas).join(", ");
-    agregarLog(`Salidas disponibles: ${salidas}`, "system");
-
-    if (hab.personaje && PERSONAJES[hab.personaje]) {
-        agregarLog(`
-${PERSONAJES[hab.personaje].saludo}`, "npc");
-    }
-}
-
-// ==========================================
-// 4. MOTOR DE PARSER DE TEXTO Y DIÁLOGOS
-// ==========================================
-
-function limpiarTexto(texto) {
-    return texto
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'¡!¿?]/g, "")
-        .trim();
-}
-
-function procesarComando(entrada) {
-    const textoBruto = entrada.trim();
-    if (!textoBruto) return;
-
-    agregarLog(`> ${textoBruto}`, "player");
-
-    const textoLimpio = limpiarTexto(textoBruto);
-    const partes = textoLimpio.split(" ");
-    const comando = partes[0];
-    const argumento = partes.slice(1).join(" ");
-
-    const hab = HABITACIONES[estado.habitacionActual];
-
-    // --- 1. COMANDOS DE MOVIMIENTO ---
-    if (["ir", "norte", "sur", "este", "oeste"].includes(comando)) {
-        let direccion = comando === "ir" ? argumento : comando;
-        if (hab.salidas[direccion]) {
-            estado.habitacionActual = hab.salidas[direccion];
-            mostrarHabitacion();
-        } else {
-            agregarLog("No puedes ir en esa dirección.", "system");
+            // Update UI Subsystems
+            updateQuickNav(room);
+            updateQuickActions(room);
+            updateInventoryUI();
         }
-        return;
-    }
 
-    // --- 2. RECOGER OBJETOS ---
-    if (["coger", "tomar", "agarrar"].includes(comando)) {
-        const index = hab.objetos.indexOf(argumento);
-        if (index !== -1) {
-            hab.objetos.splice(index, 1);
-            estado.inventario.push(argumento);
-            actualizarInventarioUI();
-            agregarLog(`Has recogido: ${argumento}`, "system");
-        } else {
-            agregarLog("No ves eso aquí.", "system");
+        // LOG ENGINE
+        function appendLog(content, type = "normal") {
+            const terminal = document.getElementById('terminal');
+            const entry = document.createElement('div');
+            entry.className = "mb-2 leading-relaxed";
+
+            if (type === "user") {
+                entry.innerHTML = `<span class="text-retro-amber font-bold">> ${content}</span>`;
+            } else if (type === "system") {
+                entry.innerHTML = `<span class="text-retro-dim font-bold">[SISTEMA]: ${content}</span>`;
+            } else if (type === "error") {
+                entry.innerHTML = `<span class="text-red-400 font-bold">[!] ${content}</span>`;
+            } else if (type === "dialogue") {
+                entry.innerHTML = `<div class="p-2.5 my-1 bg-retro-purple/10 border-l-2 border-retro-purple rounded-r-lg">${content}</div>`;
+            } else {
+                entry.innerHTML = `<span class="text-retro-green">${content}</span>`;
+            }
+
+            terminal.appendChild(entry);
+            terminal.scrollTop = terminal.scrollHeight;
         }
-        return;
-    }
 
-    // --- 3. DIÁLOGO CON NPC (MOTOR DE PALABRAS CLAVE) ---
-    if (hab.personaje && PERSONAJES[hab.personaje]) {
-        const npc = PERSONAJES[hab.personaje];
-        let fraseAEvaluar = comando === "decir" ? argumento : textoLimpio;
-        let respondido = false;
+        // TEXT HELPER: Normalize text (lowercase, remove accents and punctuation)
+        function normalizeText(text) {
+            return text.toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // Strip diacritics / accents
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'¿¡]/g, " ") // Strip punctuation
+                .replace(/\s+/g, " ")
+                .trim();
+        }
 
-        for (let nodo of npc.dialogos) {
-            const coincide = nodo.keywords.some(kw => fraseAEvaluar.includes(limpiarTexto(kw)));
-            if (coincide) {
-                if (nodo.itemRequired && !estado.inventario.includes(nodo.itemRequired)) {
-                    agregarLog(`${npc.nombre}: 'Dices tener lo necesario, pero no me lo has mostrado.'`, "npc");
-                    respondido = true;
-                    break;
+        // INTEGRATED COMMAND & DIALOGUE PARSER ENGINE
+        function processCommand(raw) {
+            const rawTrimmed = raw.trim();
+            if (!rawTrimmed) return;
+
+            appendLog(rawTrimmed, "user");
+
+            const normalized = normalizeText(rawTrimmed);
+            const userWords = normalized.split(' ');
+            const room = gameData.rooms[currentRoomId];
+            const verb = userWords[0];
+
+            // 1. MOVEMENT SYSTEM COMMANDS
+            if (['ir', 'norte', 'sur', 'este', 'oeste', 'n', 's', 'e', 'o'].includes(verb)) {
+                let dir = verb;
+                if (verb === 'ir') dir = userWords[1];
+                if (dir === 'n') dir = 'norte';
+                if (dir === 's') dir = 'sur';
+                if (dir === 'e') dir = 'este';
+                if (dir === 'o') dir = 'oeste';
+
+                if (room.salidas && room.salidas[dir]) {
+                    currentRoomId = room.salidas[dir];
+                    renderRoom();
+                    return;
+                } else {
+                    appendLog("No puedes ir en esa dirección.", "error");
+                    return;
+                }
+            }
+
+            // 2. ITEM PICKUP SYSTEM COMMANDS
+            if (['coger', 'tomar', 'recoger', 'agarrar'].includes(verb)) {
+                const targetWord = userWords.slice(1).join('_');
+                let foundItemKey = null;
+
+                if (room.objetos) {
+                    foundItemKey = room.objetos.find(itemKey => {
+                        const itemObj = gameData.items[itemKey];
+                        const normItemName = itemObj ? normalizeText(itemObj.nombre) : itemKey;
+                        return normItemName.includes(targetWord) || itemKey.includes(targetWord) || targetWord.includes(itemKey);
+                    });
                 }
 
-                let msg = `${npc.nombre}: '${nodo.response}'`;
+                if (foundItemKey) {
+                    const idx = room.objetos.indexOf(foundItemKey);
+                    room.objetos.splice(idx, 1);
+                    inventory.push(foundItemKey);
+                    const itemObj = gameData.items[foundItemKey] || { nombre: foundItemKey };
+                    appendLog(`Has cogido: <b class="text-retro-amber">${itemObj.nombre}</b>.`, "system");
+                    renderRoom();
+                } else {
+                    appendLog("No ves ese objeto aquí para coger.", "error");
+                }
+                return;
+            }
 
-                if (nodo.itemGiven && !estado.inventario.includes(nodo.itemGiven)) {
-                    estado.inventario.push(nodo.itemGiven);
-                    actualizarInventarioUI();
-                    msg += `
-[¡Has recibido: ${nodo.itemGiven}!]`;
+            // 3. EXAMINE / LOOK SYSTEM COMMANDS
+            if (['mirar', 'examinar', 'ver'].includes(verb)) {
+                const targetWord = userWords.slice(1).join('_');
+                if (!targetWord) {
+                    appendLog(room.descripcion);
+                } else {
+                    const invKey = inventory.find(k => normalizeText(gameData.items[k]?.nombre || k).includes(targetWord));
+                    if (invKey) {
+                        const itemObj = gameData.items[invKey];
+                        appendLog(`<b class="text-retro-amber">${itemObj.nombre}:</b> ${itemObj.desc}`);
+                    } else {
+                        appendLog("No posees ese objeto para examinarlo.", "error");
+                    }
+                }
+                return;
+            }
+
+            // 4. INVENTORY SYSTEM COMMAND
+            if (['inventario', 'i', 'objetos'].includes(verb)) {
+                if (inventory.length === 0) appendLog("Tu inventario está vacío.", "system");
+                else {
+                    const itemsStr = inventory.map(id => (gameData.items[id] ? gameData.items[id].nombre : id)).join(', ');
+                    appendLog(`Inventario: <b class="text-retro-amber">${itemsStr}</b>`, "system");
+                }
+                return;
+            }
+
+            // 5. HELP / CLEAR COMMANDS
+            if (verb === 'ayuda' || verb === 'help') {
+                appendLog(`<b>COMANDOS GENERALES DE EXPLORACIÓN:</b><br>
+                • <b>ir [norte/sur/este/oeste]</b> - Desplazarte por las habitaciones<br>
+                • <b>coger [objeto]</b> - Recoger un objeto de la estancia<br>
+                • <b>mirar [objeto]</b> - Examinar tu entorno u objetos<br>
+                • <b>inventario</b> - Ver lo que llevas encima<br>
+                <br><b>CONVERSACIÓN NARRATIVA DIRECTA:</b><br>
+                • Si hay un personaje en la sala, simplemente escríbele lo que quieras (ej: <i>'hola'</i>, <i>'dame la antorcha'</i>, <i>'¿dónde está la llave?'</i>).`, "system");
+                return;
+            }
+
+            if (verb === 'limpiar' || verb === 'cls') {
+                document.getElementById('terminal').innerHTML = "";
+                return;
+            }
+
+            // 6. CHARACTER DIALOGUE PARSER (If character is in room and command wasn't a movement/system verb)
+            if (room.personajes && room.personajes.length > 0) {
+                const activeNpcId = room.personajes[0]; // Active NPC in the room
+                const npc = gameData.npcs[activeNpcId];
+
+                if (npc) {
+                    const npcReply = parseNpcKeywordDialogue(userWords, npc);
+                    appendLog(`<span class="text-retro-purple font-semibold"><i class="fa-solid fa-comment-dots mr-1"></i>${npcReply}</span>`, "dialogue");
+                    return;
+                }
+            }
+
+            // Fallback if no NPC in room and command not recognized
+            appendLog(`Comando no reconocido '${verb}'. Escribe 'ayuda' para ver comandos o una dirección para moverte.`, "error");
+        }
+
+        function processCommandFromInput() {
+            const input = document.getElementById('command-input');
+            const val = input.value;
+            input.value = "";
+            processCommand(val);
+        }
+
+        // PARSE KEYWORDS & SYNONYMS FOR NPC DIALOGUE
+        function parseNpcKeywordDialogue(userWords, npc) {
+            if (!npc.reglasDialogo || npc.reglasDialogo.length === 0) {
+                return npc.respuestaDefecto || "El personaje no dice nada.";
+            }
+
+            for (let rule of npc.reglasDialogo) {
+                // Check required inventory item if specified
+                if (rule.requiereObjeto && !inventory.includes(rule.requiereObjeto)) {
+                    continue;
                 }
 
-                agregarLog(msg, "npc");
-                respondido = true;
-                break;
+                // Match keywords against user input words
+                const matches = rule.palabrasClave.some(kw => {
+                    const normKw = normalizeText(kw);
+                    return userWords.includes(normKw) || userWords.some(w => w.includes(normKw));
+                });
+
+                if (matches) {
+                    // Check if rule delivers an item to inventory
+                    if (rule.entregarObjeto && !inventory.includes(rule.entregarObjeto)) {
+                        inventory.push(rule.entregarObjeto);
+                        const itemObj = gameData.items[rule.entregarObjeto] || { nombre: rule.entregarObjeto };
+                        appendLog(`¡${npc.nombre} te ha entregado: <b class="text-retro-amber">${itemObj.nombre}</b>!`, "system");
+                        updateInventoryUI();
+                    }
+                    return rule.respuesta;
+                }
+            }
+
+            // Fallback response if no keywords matched
+            return npc.respuestaDefecto || "El personaje te escucha en silencio sin entenderte.";
+        }
+
+        // UI NAVIGATION & CONTROLS RENDERERS
+        function updateQuickNav(room) {
+            const container = document.getElementById('quick-nav');
+            container.innerHTML = "";
+
+            ['norte', 'sur', 'este', 'oeste'].forEach(dir => {
+                const btn = document.createElement('button');
+                const avail = room.salidas && room.salidas[dir];
+                btn.className = `px-2 py-1 text-xs font-bold rounded-md transition-all ${
+                    avail 
+                    ? 'bg-retro-cyan/20 text-retro-cyan hover:bg-retro-cyan hover:text-black border border-retro-cyan/40' 
+                    : 'bg-black/40 text-retro-dim/30 border border-retro-border/20 cursor-not-allowed'
+                }`;
+                btn.innerText = dir.charAt(0).toUpperCase();
+                if (avail) btn.onclick = () => processCommand(`ir ${dir}`);
+                else btn.disabled = true;
+                container.appendChild(btn);
+            });
+        }
+
+        function updateQuickActions(room) {
+            const container = document.getElementById('quick-actions');
+            container.innerHTML = "";
+
+            // Movement options
+            if (room.salidas && Object.keys(room.salidas).length > 0) {
+                Object.keys(room.salidas).forEach(dir => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left px-3 py-2 bg-retro-border/30 hover:bg-retro-cyan/20 text-retro-cyan border border-retro-cyan/30 rounded-lg text-xs flex justify-between items-center transition-colors";
+                    btn.innerHTML = `<span><i class="fa-solid fa-compass mr-2"></i>Ir al ${dir.toUpperCase()}</span> <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>`;
+                    btn.onclick = () => processCommand(`ir ${dir}`);
+                    container.appendChild(btn);
+                });
+            } else {
+                container.innerHTML = `<div class="text-xs text-retro-dim italic p-2 text-center">No hay salidas disponibles.</div>`;
+            }
+
+            // Room Objects Pickup Actions
+            if (room.objetos && room.objetos.length > 0) {
+                room.objetos.forEach(objId => {
+                    const itemObj = gameData.items[objId] || { nombre: objId, icono: 'fa-box' };
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left px-3 py-2 bg-retro-amber/10 hover:bg-retro-amber/20 text-retro-amber border border-retro-amber/30 rounded-lg text-xs flex justify-between items-center transition-colors mt-1";
+                    btn.innerHTML = `<span><i class="fa-solid ${itemObj.icono} mr-2"></i>Coger ${itemObj.nombre}</span> <i class="fa-solid fa-hand-pointer text-xs opacity-50"></i>`;
+                    btn.onclick = () => processCommand(`coger ${objId}`);
+                    container.appendChild(btn);
+                });
             }
         }
 
-        if (respondido) return;
+        function updateInventoryUI() {
+            const container = document.getElementById('inventory-list');
+            const countLabel = document.getElementById('inventory-count');
+            container.innerHTML = "";
 
-        // Si la frase no encajó con ninguna palabra clave y el comando no era del sistema:
-        if (comando !== "mirar" && comando !== "ayuda") {
-            agregarLog(`${npc.nombre}: '${npc.respuestaDefecto}'`, "npc");
-            return;
+            countLabel.innerText = `${inventory.length} objeto${inventory.length !== 1 ? 's' : ''}`;
+
+            if (inventory.length === 0) {
+                container.innerHTML = `<div class="text-xs text-retro-dim italic p-2 text-center">Sin objetos en inventario.</div>`;
+                return;
+            }
+
+            inventory.forEach(objId => {
+                const itemObj = gameData.items[objId] || { nombre: objId, icono: 'fa-box' };
+                const div = document.createElement('div');
+                div.className = "p-2 bg-black/40 border border-retro-border rounded-lg flex items-center justify-between group hover:border-retro-amber transition-colors";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid ${itemObj.icono} text-retro-amber text-sm"></i>
+                        <span class="text-xs text-retro-green font-bold">${itemObj.nombre}</span>
+                    </div>
+                    <button onclick="processCommand('mirar ${objId}')" title="Examinar" class="text-xs text-retro-dim hover:text-retro-cyan px-1">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
         }
-    }
 
-    // --- 4. AYUDA ---
-    if (comando === "ayuda") {
-        agregarLog("Comandos: 'ir [direccion]', 'coger [objeto]', o escribe cualquier frase para hablar con los personajes de la sala.", "system");
-        return;
-    }
+        // SVG FALLBACK IMAGE GENERATOR
+        function handleImageError(img) {
+            const fallbackType = img.dataset.fallback || "temple";
+            let color = "#33ff57";
+            let title = "ESCENA SAGRADA";
 
-    agregarLog("No entiendo ese comando. Escribe 'ayuda' para ver la lista.", "system");
-}
+            if (fallbackType === 'library') { color = "#00f0ff"; title = "BIBLIOTECA DEL SABIO"; }
+            else if (fallbackType === 'garden') { color = "#c084fc"; title = "JARDÍN DE LAS ESTATUAS"; }
+            else if (fallbackType === 'treasury') { color = "#ffb000"; title = "GALERÍA SECRETA"; }
 
-// ==========================================
-// 5. INICIALIZACIÓN
-// ==========================================
+            const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400">
+                <rect width="800" height="400" fill="#080b10"/>
+                <path d="M0 300 L180 180 L350 260 L550 120 L800 240 L800 400 L0 400 Z" fill="#101622"/>
+                <circle cx="400" cy="120" r="50" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+                <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="${color}" font-family="monospace" font-size="20" font-weight="bold">${title}</text>
+            </svg>`;
 
-inputForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const val = userInput.value;
-    userInput.value = "";
-    procesarComando(val);
-});
+            img.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+        }
 
-// Mensaje de inicio
-agregarLog("¡Bienvenido a la Aventura Conversacional!", "system");
-mostrarHabitacion();
+        // EDITORS ENGINE (JSON & VISUAL)
+        function toggleEditor(type) {
+            if (type === 'json') {
+                const modal = document.getElementById('json-editor-modal');
+                if (modal.classList.contains('hidden')) {
+                    document.getElementById('json-editor-textarea').value = JSON.stringify(gameData, null, 4);
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            } else if (type === 'visual') {
+                const modal = document.getElementById('visual-editor-modal');
+                if (modal.classList.contains('hidden')) {
+                    renderVisualEditorForms();
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+        }
 
-</script>
+        function saveJSONEditor() {
+            try {
+                const updated = JSON.parse(document.getElementById('json-editor-textarea').value);
+                gameData = updated;
+                toggleEditor('json');
+                appendLog("¡Estructura de la aventura actualizada desde JSON!", "system");
+                renderRoom();
+            } catch (e) {
+                alert("Error de sintaxis JSON: " + e.message);
+            }
+        }
+
+        function downloadStoryJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gameData, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "aventura_narrativa.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // VISUAL EDITOR TAB SWITCHING & FORM GENERATION
+        function switchEditorTab(tab) {
+            ['rooms', 'npcs', 'items'].forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).className = "px-4 py-2 rounded-lg text-xs font-bold bg-retro-border text-retro-dim";
+            });
+            document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tab}`).className = "px-4 py-2 rounded-lg text-xs font-bold bg-retro-purple text-white";
+        }
+
+        function renderVisualEditorForms() {
+            // Render Rooms
+            const roomsContainer = document.getElementById('visual-rooms-container');
+            roomsContainer.innerHTML = "";
+            Object.keys(gameData.rooms).forEach(id => {
+                const r = gameData.rooms[id];
+                const div = document.createElement('div');
+                div.className = "p-3 bg-black/60 border border-retro-border rounded-xl space-y-2 text-xs";
+                div.innerHTML = `
+                    <div class="font-bold text-retro-green uppercase">ID: ${id}</div>
+                    <div><label class="text-retro-dim">Nombre:</label><input type="text" id="vedit-room-name-${id}" value="${r.nombre}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white"></div>
+                    <div><label class="text-retro-dim">Descripción:</label><textarea id="vedit-room-desc-${id}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white h-16">${r.descripcion}</textarea></div>
+                    <div><label class="text-retro-dim">URL Imagen:</label><input type="text" id="vedit-room-img-${id}" value="${r.imagen}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white"></div>
+                `;
+                roomsContainer.appendChild(div);
+            });
+
+            // Render NPCs and Keyword Rules
+            const npcsContainer = document.getElementById('visual-npcs-container');
+            npcsContainer.innerHTML = "";
+            Object.keys(gameData.npcs).forEach(id => {
+                const npc = gameData.npcs[id];
+                const div = document.createElement('div');
+                div.className = "p-4 bg-black/60 border border-retro-purple/50 rounded-xl space-y-3 text-xs";
+
+                let rulesHtml = "";
+                if (npc.reglasDialogo) {
+                    npc.reglasDialogo.forEach((rule, rIdx) => {
+                        rulesHtml += `
+                            <div class="p-2.5 bg-black/80 border border-retro-border rounded-lg space-y-2 my-2">
+                                <div class="text-[10px] text-retro-amber font-bold">Regla ${rIdx + 1}</div>
+                                <div><label class="text-retro-dim">Palabras Clave / Sinónimos (separadas por coma):</label>
+                                <input type="text" id="vedit-npc-rule-kw-${id}-${rIdx}" value="${rule.palabrasClave ? rule.palabrasClave.join(', ') : ''}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-retro-cyan"></div>
+                                <div><label class="text-retro-dim">Respuesta del Personaje:</label>
+                                <textarea id="vedit-npc-rule-resp-${id}-${rIdx}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-retro-green h-12">${rule.respuesta}</textarea></div>
+                            </div>
+                        `;
+                    });
+                }
+
+                div.innerHTML = `
+                    <div class="font-bold text-retro-purple uppercase text-sm">Personaje ID: ${id}</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="text-retro-dim">Nombre:</label><input type="text" id="vedit-npc-name-${id}" value="${npc.nombre}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white"></div>
+                        <div><label class="text-retro-dim">Rol:</label><input type="text" id="vedit-npc-role-${id}" value="${npc.rol}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white"></div>
+                    </div>
+                    <div><label class="text-retro-dim">Saludo Inicial Narrativo (al entrar a la sala):</label>
+                    <textarea id="vedit-npc-greet-${id}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white h-12">${npc.saludoInicial || ''}</textarea></div>
+                    <div><label class="text-retro-dim">Respuesta por defecto en la terminal:</label>
+                    <input type="text" id="vedit-npc-def-${id}" value="${npc.respuestaDefecto || ''}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white"></div>
+                    <div class="mt-2 font-pixel text-[10px] text-retro-cyan">REGLAS DE RESPUESTA EN TERMINAL:</div>
+                    ${rulesHtml}
+                `;
+                npcsContainer.appendChild(div);
+            });
+
+            // Render Items
+            const itemsContainer = document.getElementById('visual-items-container');
+            itemsContainer.innerHTML = "";
+            Object.keys(gameData.items).forEach(id => {
+                const item = gameData.items[id];
+                const div = document.createElement('div');
+                div.className = "p-3 bg-black/60 border border-retro-border rounded-xl space-y-2 text-xs";
+                div.innerHTML = `
+                    <div class="font-bold text-retro-amber uppercase">ID: ${id}</div>
+                    <div><label class="text-retro-dim">Nombre:</label><input type="text" id="vedit-item-name-${id}" value="${item.nombre}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white"></div>
+                    <div><label class="text-retro-dim">Descripción:</label><input type="text" id="vedit-item-desc-${id}" value="${item.desc}" class="w-full bg-retro-panel border border-retro-border p-1 rounded text-white"></div>
+                `;
+                itemsContainer.appendChild(div);
+            });
+        }
+
+        function saveVisualEditor() {
+            // Save Rooms
+            Object.keys(gameData.rooms).forEach(id => {
+                const nameInput = document.getElementById(`vedit-room-name-${id}`);
+                const descInput = document.getElementById(`vedit-room-desc-${id}`);
+                const imgInput = document.getElementById(`vedit-room-img-${id}`);
+
+                if (nameInput) gameData.rooms[id].nombre = nameInput.value;
+                if (descInput) gameData.rooms[id].descripcion = descInput.value;
+                if (imgInput) gameData.rooms[id].imagen = imgInput.value;
+            });
+
+            // Save NPCs and Keyword Rules
+            Object.keys(gameData.npcs).forEach(id => {
+                const nameInput = document.getElementById(`vedit-npc-name-${id}`);
+                const roleInput = document.getElementById(`vedit-npc-role-${id}`);
+                const greetInput = document.getElementById(`vedit-npc-greet-${id}`);
+                const defInput = document.getElementById(`vedit-npc-def-${id}`);
+
+                if (nameInput) gameData.npcs[id].nombre = nameInput.value;
+                if (roleInput) gameData.npcs[id].rol = roleInput.value;
+                if (greetInput) gameData.npcs[id].saludoInicial = greetInput.value;
+                if (defInput) gameData.npcs[id].respuestaDefecto = defInput.value;
+
+                if (gameData.npcs[id].reglasDialogo) {
+                    gameData.npcs[id].reglasDialogo.forEach((rule, rIdx) => {
+                        const kwInput = document.getElementById(`vedit-npc-rule-kw-${id}-${rIdx}`);
+                        const respInput = document.getElementById(`vedit-npc-rule-resp-${id}-${rIdx}`);
+
+                        if (kwInput) {
+                            rule.palabrasClave = kwInput.value.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+                        }
+                        if (respInput) {
+                            rule.respuesta = respInput.value;
+                        }
+                    });
+                }
+            });
+
+            // Save Items
+            Object.keys(gameData.items).forEach(id => {
+                const nameInput = document.getElementById(`vedit-item-name-${id}`);
+                const descInput = document.getElementById(`vedit-item-desc-${id}`);
+
+                if (nameInput) gameData.items[id].nombre = nameInput.value;
+                if (descInput) gameData.items[id].desc = descInput.value;
+            });
+
+            toggleEditor('visual');
+            appendLog("¡Cambios del Editor Visual guardados con éxito!", "system");
+            renderRoom();
+        }
+
+        function addNewRoomPrompt() {
+            const id = prompt("Escribe el ID de la nueva habitación (ej: 'taberna'):");
+            if (id && !gameData.rooms[id]) {
+                gameData.rooms[id] = {
+                    nombre: "Nueva Habitación",
+                    descripcion: "Escribe la descripción de la estancia...",
+                    imagen: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800",
+                    salidas: { sur: "entrada" },
+                    objetos: [],
+                    personajes: []
+                };
+                renderVisualEditorForms();
+            }
+        }
+
+        function addNewNpcPrompt() {
+            const id = prompt("Escribe el ID del nuevo personaje (ej: 'tabernero'):");
+            if (id && !gameData.npcs[id]) {
+                gameData.npcs[id] = {
+                    nombre: "Nuevo Personaje",
+                    rol: "Habitante",
+                    saludoInicial: "El personaje te ve llegar y te saluda cordialmente.",
+                    respuestaDefecto: "No entiendo qué me dices.",
+                    reglasDialogo: [
+                        {
+                            palabrasClave: ["hola", "saludos"],
+                            respuesta: "Hola, viajero."
+                        }
+                    ]
+                };
+                gameData.rooms[currentRoomId].personajes.push(id);
+                renderVisualEditorForms();
+            }
+        }
+
+        function addNewItemPrompt() {
+            const id = prompt("Escribe el ID del nuevo objeto (ej: 'cerveza'):");
+            if (id && !gameData.items[id]) {
+                gameData.items[id] = {
+                    nombre: "Nuevo Objeto",
+                    icono: "fa-box",
+                    desc: "Descripción del objeto."
+                };
+                renderVisualEditorForms();
+            }
+        }
+
+        function resetGame() {
+            if (confirm("¿Seguro que deseas reiniciar la partida?")) {
+                gameData = JSON.parse(JSON.stringify(initialGameData));
+                currentRoomId = "entrada";
+                inventory = [];
+                document.getElementById('terminal').innerHTML = "";
+                appendLog("REINICIANDO AVENTURA...", "system");
+                renderRoom();
+            }
+        }
+    </script>
 </body>
 </html>

@@ -653,36 +653,23 @@
             });
         }
 
-        function updateQuickActions(room) {
-            const container = document.getElementById('quick-actions');
-            container.innerHTML = "";
+      function updateQuickActions(room) {
+        const container = document.getElementById('quick-actions');
+        container.innerHTML = "";
 
-            // Movement options
-            if (room.salidas && Object.keys(room.salidas).length > 0) {
-                Object.keys(room.salidas).forEach(dir => {
-                    const btn = document.createElement('button');
-                    btn.className = "w-full text-left px-3 py-2 bg-retro-border/30 hover:bg-retro-cyan/20 text-retro-cyan border border-retro-cyan/30 rounded-lg text-xs flex justify-between items-center transition-colors";
-                    btn.innerHTML = `<span><i class="fa-solid fa-compass mr-2"></i>Ir al ${dir.toUpperCase()}</span> <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>`;
-                    btn.onclick = () => processCommand(`ir ${dir}`);
-                    container.appendChild(btn);
-                });
-            } else {
-                container.innerHTML = `<div class="text-xs text-retro-dim italic p-2 text-center">No hay salidas disponibles.</div>`;
-            }
-
-            // Room Objects Pickup Actions
-            if (room.objetos && room.objetos.length > 0) {
-                room.objetos.forEach(objId => {
-                    const itemObj = gameData.items[objId] || { nombre: objId, icono: 'fa-box' };
-                    const btn = document.createElement('button');
-                    btn.className = "w-full text-left px-3 py-2 bg-retro-amber/10 hover:bg-retro-amber/20 text-retro-amber border border-retro-amber/30 rounded-lg text-xs flex justify-between items-center transition-colors mt-1";
-                    btn.innerHTML = `<span><i class="fa-solid ${itemObj.icono} mr-2"></i>Coger ${itemObj.nombre}</span> <i class="fa-solid fa-hand-pointer text-xs opacity-50"></i>`;
-                    btn.onclick = () => processCommand(`coger ${objId}`);
-                    container.appendChild(btn);
-                });
-            }
+        // Movement options (Se mantienen los botones de movimiento)
+        if (room.salidas && Object.keys(room.salidas).length > 0) {
+            Object.keys(room.salidas).forEach(dir => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left px-3 py-2 bg-retro-border/30 hover:bg-retro-cyan/20 text-retro-cyan border border-retro-cyan/30 rounded-lg text-xs flex justify-between items-center transition-colors";
+                btn.innerHTML = `<span><i class="fa-solid fa-compass mr-2"></i>Ir al ${dir.toUpperCase()}</span> <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>`;
+                btn.onclick = () => processCommand(`ir ${dir}`);
+                container.appendChild(btn);
+            });
+        } else {
+            container.innerHTML = `<div class="text-xs text-retro-dim italic p-2 text-center">No hay salidas disponibles.</div>`;
         }
-
+    }
         function updateInventoryUI() {
             const container = document.getElementById('inventory-list');
             const countLabel = document.getElementById('inventory-count');

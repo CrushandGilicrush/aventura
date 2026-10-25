@@ -490,6 +490,14 @@
                 }
             }
 
+            // --- DENTRO DE processCommand() ---
+if (verb === 'leer' || verb === 'examinar') {
+    if (target === 'diario' && inventory.includes('diario')) {
+        appendLog("Abres el diario del explorador. Lees: 'La llave dorada está oculta entre la maleza del jardín...'", "system");
+        return;
+    }
+}
+
             // 2. ITEM PICKUP SYSTEM COMMANDS
             if (['coger', 'tomar', 'recoger', 'agarrar'].includes(verb)) {
                 const targetWord = userWords.slice(1).join('_');

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventura Conversacional Retro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Retro/Monospace Feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Retro Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'monospace'],
+                        pixel: ['"Press Start 2P"', 'cursive'],
+                    },
+                    colors: {
+                        retro: {
+                            bg: '#0a0d12',
+                            panel: '#121824',
+                            border: '#1f293d',
+                            green: '#33ff57',
+                            amber: '#ffb000',
+                            cyan: '#00f0ff',
+                            magenta: '#ff007f',
+                            dim: '#6272a4'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom retro scanline and CRT glow effects */
+        body {
+            background-color: #06090e;
+            color: #d8dee9;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .crt-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .crt-container::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 20;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
+        .glow-green {
+            text-shadow: 0 0 8px rgba(51, 255, 87, 0.6);
+        }
+
+        .glow-cyan {
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+        }
+
+        .glow-amber {
+            text-shadow: 0 0 8px rgba(255, 176, 0, 0.6);
+        }
+
+        /* Custom Scrollbar for retro vibe */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0d12;
+            border-left: 1px solid #1f293d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f293d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden p-2 md:p-4">
+
+    <!-- Header Section -->
+    <header class="flex justify-between items-center bg-retro-panel border-2 border-retro-border p-3 rounded-lg mb-3 shadow-lg">
+        <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-terminal text-retro-cyan text-xl glow-cyan"></i>
+            <h1 class="font-pixel text-xs sm:text-sm md:text-base text-retro-green glow-green tracking-wider">
+                LA AVENTURA ORIGINAL <span class="text-xs text-retro-cyan font-mono">[v2.0]</span>
+            </h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="btn-editor" onclick="toggleEditor()" class="px-3 py-1.5 bg-retro-border hover:bg-retro-cyan hover:text-black text-retro-cyan text-xs font-bold rounded transition-all flex items-center space-x-1 border border-retro-cyan/30">
+                <i class="fa-solid fa-code"></i>
+                <span class="hidden sm:inline">Editar Historia (JSON)</span>
+            </button>
+            <button onclick="resetGame()" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold rounded transition-all border border-red-800/50">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0 crt-container">
+        
+        <!-- Left Side: Image & Narrative Output & Controls -->
+        <main class="lg:col-span-8 flex flex-col space-y-3 min-h-0">
+            
+            <!-- Scene Image Area with SVG fallback -->
+            <div class="relative h-48 sm:h-56 md:h-64 bg-black rounded-lg border-2 border-retro-border overflow-hidden shrink-0 group">
+                <img id="scene-image" src="" alt="Escena actual" class="w-full h-full object-cover transition-opacity duration-500 opacity-90" onerror="handleImageError(this)">
+                <div class="absolute inset-0 bg-gradient-to-t from-retro-bg via-transparent to-transparent opacity-80"></div>
+                
+                <!-- Location Tag Badge -->
+                <div class="absolute top-3 left-3 bg-black/80 backdrop-blur border border-retro-cyan/50 px-3 py-1 rounded text-xs font-bold text-retro-cyan flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-retro-green animate-pulse"></span>
+                    <span id="room-title">Cargando...</span>
+                </div>
+
+                <!-- Fast Direction Buttons Overlay -->
+                <div id="quick-nav" class="absolute bottom-3 right-3 flex items-center space-x-1 bg-black/70 backdrop-blur p-1 rounded border border-retro-border">
+                    <!-- Dynamic Nav buttons generated via JS -->
+                </div>
+            </div>
+
+            <!-- Narrative Terminal Output -->
+            <div id="terminal" class="flex-1 bg-retro-panel border-2 border-retro-border rounded-lg p-4 overflow-y-auto space-y-3 font-mono text-sm leading-relaxed shadow-inner">
+                <!-- Log entries will be inserted here -->
+            </div>
+
+            <!-- Command Input Box -->
+            <div class="bg-retro-panel border-2 border-retro-border rounded-lg p-2.5 flex items-center space-x-2 shrink-0 focus-within:border-retro-cyan transition-colors">
+                <span class="text-retro-green font-bold text-lg glow-green pl-1">></span>
+                <input type="text" id="command-input" placeholder="Escribe un comando (ej: 'ir norte', 'coger antorcha', 'ayuda')..." 
+                       class="w-full bg-transparent border-none text-retro-green font-mono text-sm focus:outline-none placeholder-retro-dim/50"
+                       autocomplete="off">
+                <button onclick="processCommandFromInput()" class="px-4 py-1.5 bg-retro-cyan text-black font-bold rounded text-xs hover:bg-retro-green transition-colors">
+                    ENVIAR
+                </button>
+            </div>
+        </main>
+
+        <!-- Right Side: Visual Inventory & Interactive Actions -->
+        <aside class="lg:col-span-4 flex flex-col space-y-3 min-h-0">
+            
+            <!-- Visual Inventory Panel -->
+            <div class="bg-retro-panel border-2 border-retro-border rounded-lg p-3 flex flex-col h-1/2">
+                <div class="flex justify-between items-center border-b border-retro-border pb-2 mb-2">
+                    <h2 class="text-xs font-pixel text-retro-amber glow-amber flex items-center space-x-2">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <span>INVENTARIO</span>
+                    </h2>
+                    <span id="inventory-count" class="text-xs text-retro-dim">0 objetos</span>
+                </div>
+                <div id="inventory-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                    <!-- Dynamic Inventory items -->
+                </div>
+            </div>
+
+            <!-- Quick Action Context Buttons -->
+            <div class="bg-retro-panel border-2 border-retro-border rounded-lg p-3 flex flex-col h-1/2">
+                <div class="border-b border-retro-border pb-2 mb-2">
+                    <h2 class="text-xs font-pixel text-retro-cyan glow-cyan flex items-center space-x-2">
+                        <i class="fa-solid fa-hand"></i>
+                        <span>ACCIONES RÁPIDAS</span>
+                    </h2>
+                </div>
+                <div id="quick-actions" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                    <!-- Dynamic Action buttons will appear here -->
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- JSON Narrative Editor Drawer / Modal -->
+    <div id="editor-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex flex-col p-4 md:p-8 backdrop-blur-sm">
+        <div class="flex justify-between items-center mb-3 border-b border-retro-border pb-3">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-pen-to-square text-retro-amber text-lg"></i>
+                <h2 class="font-pixel text-sm text-retro-amber">EDITOR DE HISTORIA Y ESCENARIOS (JSON)</h2>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="saveNarrativeJSON()" class="px-4 py-1.5 bg-retro-green text-black font-bold text-xs rounded hover:opacity-90">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios
+                </button>
+                <button onclick="toggleEditor()" class="px-4 py-1.5 bg-retro-border text-retro-dim font-bold text-xs rounded hover:text-white">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+        <p class="text-xs text-retro-dim mb-2">
+            Puedes añadir o modificar las habitaciones, descripciones, objetos y URLs de las imágenes. Asegúrate de mantener la estructura JSON válida.
+        </p>
+        <textarea id="json-editor-textarea" class="flex-1 bg-black text-retro-green font-mono text-xs p-4 rounded border border-retro-border focus:outline-none focus:border-retro-cyan resize-none"></textarea>
+    </div>
+
+    <!-- Application Engine Logic -->
+    <script>
+        // Default Narrative Data Structure
+        const defaultWorld = {
+            "entrada": {
+                "nombre": "Entrada a la Cueva Oscura",
+                "descripcion": "Te encuentras frente a la imponente boca de una gruta milenaria. Un aire gélido y silbante fluye desde la oscuridad interior. Las rocas del suelo están cubiertas de musgo húmedo.",
+                "imagen": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1000&q=80",
+                "svgFallback": "cave",
+                "salidas": {
+                    "norte": "vestibulo",
+                    "este": "bosque"
+                },
+                "objetos": ["antorcha"]
+            },
+            "vestibulo": {
+                "nombre": "Gran Vestíbulo de Piedra",
+                "descripcion": "Una enorme sala abovedada. El eco de gotas de agua al caer rompe el silencio. En una pared divisas antiguas inscripciones tribales talladas en la piedra.",
+                "imagen": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80",
+                "svgFallback": "hall",
+                "salidas": {
+                    "sur": "entrada",
+                    "norte": "biblioteca"
+                },
+                "objetos": ["llave_bronce"]
+            },
+            "biblioteca": {
+                "nombre": "Biblioteca de los Sabios",
+                "descripcion": "Estanterías interminables repletas de tomos antiguos, mapas astrológicos y pergaminos carcomidos. Un espeso polvo flota en la penumbra.",
+                "imagen": "https://images.unsplash.com/photo-1507842237312-b257a0520698?auto=format&fit=crop&w=1000&q=80",
+                "svgFallback": "library",
+                "salidas": {
+                    "sur": "vestibulo"
+                },
+                "objetos": ["grimorio", "mapa"]
+            },
+            "bosque": {
+                "nombre": "Bosque Susurrante",
+                "descripcion": "Un frondoso bosque envuelto en una niebla violácea. Los árboles parecen inclinarse hacia ti con curiosidad ancestral.",
+                "imagen": "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80",
+                "svgFallback": "forest",
+                "salidas": {
+                    "oeste": "entrada"
+                },
+                "objetos": ["cristal_mago"]
+            }
+        };
+
+        const itemDatabase = {
+            "antorcha": { nombre: "Antorcha encendida", icono: "fa-fire", desc: "Emite una cálida luz y ahuyenta las sombras profundas." },
+            "llave_bronce": { nombre: "Llave de Bronce", icono: "fa-key", desc: "Una pesada llave con grabados de runas antiguas." },
+            "grimorio": { nombre: "Grimorio de Hechizos", icono: "fa-book-skull", desc: "Un libro encuadernado en cuero oscuro lleno de fórmulas místicas." },
+            "mapa": { nombre: "Mapa Estelar", icono: "fa-map", desc: "Detalla constelaciones olvidadas y rutas secretas." },
+            "cristal_mago": { nombre: "Cristal Mágico", icono: "fa-gem", desc: "Pulsa con un brillo azulado fascinante." }
+        };
+
+        // Game State
+        let world = JSON.parse(JSON.stringify(defaultWorld));
+        let currentRoomId = "entrada";
+        let inventory = [];
+        let isTypewriting = false;
+
+        // Initialize Game
+        window.onload = function() {
+            appendLog("SISTEMA INICIALIZADO.", "system");
+            appendLog("Escribe <b>'ayuda'</b> para ver la lista de comandos disponibles.", "system");
+            renderRoom();
+
+            // Handle Enter Key press
+            document.getElementById('command-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    processCommandFromInput();
+                }
+            });
+        };
+
+        // Render Current Room State
+        function renderRoom() {
+            const room = world[currentRoomId];
+            if (!room) return;
+
+            // Update Room Header Tag
+            document.getElementById('room-title').innerText = room.nombre;
+
+            // Update Image
+            const imgElement = document.getElementById('scene-image');
+            imgElement.dataset.fallback = room.svgFallback || "generic";
+            imgElement.src = room.imagen;
+
+            // Render Text Narrative with Typewriter Effect
+            const introText = `<span class="text-retro-cyan font-bold">[ ${room.nombre.toUpperCase()} ]</span><br>${room.descripcion}`;
+            appendLog(introText, "narrative", true);
+
+            // Render Navigation Buttons and Action Buttons
+            updateQuickNav(room);
+            updateQuickActions(room);
+            updateInventoryUI();
+        }
+
+        // Typewriter Log Effect
+        function appendLog(content, type = "normal", animate = false) {
+            const terminal = document.getElementById('terminal');
+            const entry = document.createElement('div');
+            entry.className = "mb-2 leading-relaxed";
+
+            if (type === "user") {
+                entry.innerHTML = `<span class="text-retro-amber font-bold">> ${content}</span>`;
+            } else if (type === "system") {
+                entry.innerHTML = `<span class="text-retro-dim font-bold">[INFO]: ${content}</span>`;
+            } else if (type === "error") {
+                entry.innerHTML = `<span class="text-red-400 font-bold">[!] ${content}</span>`;
+            } else {
+                entry.className += " text-retro-green";
+                if (animate && !isTypewriting) {
+                    isTypewriting = true;
+                    entry.innerHTML = "";
+                    terminal.appendChild(entry);
+                    
+                    let i = 0;
+                    const tempDiv = document.createElement("div");
+                    tempDiv.innerHTML = content;
+                    const plainText = tempDiv.innerHTML;
+
+                    function typeNext() {
+                        if (i < plainText.length) {
+                            // Quick jump HTML tags
+                            if (plainText[i] === '<') {
+                                const closingAngle = plainText.indexOf('>', i);
+                                if (closingAngle !== -1) {
+                                    i = closingAngle + 1;
+                                }
+                            } else {
+                                i++;
+                            }
+                            entry.innerHTML = plainText.substring(0, i);
+                            terminal.scrollTop = terminal.scrollHeight;
+                            setTimeout(typeNext, 12);
+                        } else {
+                            entry.innerHTML = plainText;
+                            isTypewriting = false;
+                            terminal.scrollTop = terminal.scrollHeight;
+                        }
+                    }
+                    typeNext();
+                    return;
+                } else {
+                    entry.innerHTML = content;
+                }
+            }
+
+            terminal.appendChild(entry);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Process User Inputs
+        function processCommand(rawCommand) {
+            const command = rawCommand.trim().toLowerCase();
+            if (!command) return;
+
+            appendLog(rawCommand, "user");
+
+            const parts = command.split(' ');
+            const verb = parts[0];
+            const target = parts.slice(1).join('_');
+
+            const room = world[currentRoomId];
+
+            switch(verb) {
+                case 'ir':
+                case 'moverse':
+                case 'norte': case 'sur': case 'este': case 'oeste':
+                    let dir = verb;
+                    if (['ir', 'moverse'].includes(verb)) {
+                        dir = parts[1];
+                    }
+                    if (room.salidas && room.salidas[dir]) {
+                        currentRoomId = room.salidas[dir];
+                        renderRoom();
+                    } else {
+                        appendLog("No puedes ir en esa dirección.", "error");
+                    }
+                    break;
+
+                case 'coger':
+                case 'tomar':
+                case 'recoger':
+                    if (!target) {
+                        appendLog("¿Qué objeto deseas coger?", "error");
+                        return;
+                    }
+                    const objIndex = room.objetos ? room.objetos.indexOf(target) : -1;
+                    if (objIndex !== -1) {
+                        room.objetos.splice(objIndex, 1);
+                        inventory.push(target);
+                        const itemData = itemDatabase[target] || { nombre: target };
+                        appendLog(`Has recogido: <b class="text-retro-amber">${itemData.nombre}</b>.`, "system");
+                        renderRoom();
+                    } else {
+                        appendLog("Ese objeto no se encuentra aquí.", "error");
+                    }
+                    break;
+
+                case 'mirar':
+                case 'examinar':
+                    if (!target) {
+                        appendLog(room.descripcion, "narrative");
+                        return;
+                    }
+                    if (inventory.includes(target)) {
+                        const itemData = itemDatabase[target] || { desc: "Un objeto común sin detalles especiales." };
+                        appendLog(`<b class="text-retro-amber">${itemData.nombre || target}:</b> ${itemData.desc}`);
+                    } else if (room.objetos && room.objetos.includes(target)) {
+                        const itemData = itemDatabase[target] || { desc: "Lo ves en la estancia." };
+                        appendLog(`Ves <b class="text-retro-cyan">${itemData.nombre || target}</b> en el suelo. ${itemData.desc}`);
+                    } else {
+                        appendLog("No ves eso por ningún lado.", "error");
+                    }
+                    break;
+
+                case 'inventario':
+                    if (inventory.length === 0) {
+                        appendLog("Tu inventario está vacío.", "system");
+                    } else {
+                        const itemsStr = inventory.map(id => (itemDatabase[id] ? itemDatabase[id].nombre : id)).join(', ');
+                        appendLog(`Llevas contigo: <b class="text-retro-amber">${itemsStr}</b>`, "system");
+                    }
+                    break;
+
+                case 'ayuda':
+                    appendLog(`<b>COMANDOS DISPONIBLES:</b><br>
+                    • <b>ir [norte/sur/este/oeste]</b> - Moverte por el mapa<br>
+                    • <b>coger [objeto]</b> - Añadir objeto a tu inventario<br>
+                    • <b>mirar [objeto]</b> - Examinar tu entorno u objetos<br>
+                    • <b>inventario</b> - Mostrar tus pertenencias<br>
+                    • <b>limpiar</b> - Limpiar la pantalla del terminal`, "system");
+                    break;
+
+                case 'limpiar':
+                case 'cls':
+                    document.getElementById('terminal').innerHTML = "";
+                    break;
+
+                default:
+                    appendLog(`No comprendo el comando '${verb}'. Escribe 'ayuda' para ver comandos válidos.`, "error");
+            }
+        }
+
+        function processCommandFromInput() {
+            const input = document.getElementById('command-input');
+            const val = input.value;
+            input.value = "";
+            processCommand(val);
+        }
+
+        // Render Quick Navigation Overlay Buttons
+        function updateQuickNav(room) {
+            const container = document.getElementById('quick-nav');
+            container.innerHTML = "";
+
+            const directions = ['norte', 'sur', 'este', 'oeste'];
+            directions.forEach(dir => {
+                const btn = document.createElement('button');
+                const available = room.salidas && room.salidas[dir];
+                
+                btn.className = `px-2 py-1 text-xs font-bold rounded transition-all flex items-center space-x-1 ${
+                    available 
+                    ? 'bg-retro-cyan/20 text-retro-cyan hover:bg-retro-cyan hover:text-black border border-retro-cyan/40' 
+                    : 'bg-black/40 text-retro-dim/30 border border-retro-border/20 cursor-not-allowed'
+                }`;
+                btn.innerHTML = `<span>${dir.charAt(0).toUpperCase()}</span>`;
+                if (available) {
+                    btn.onclick = () => processCommand(`ir ${dir}`);
+                } else {
+                    btn.disabled = true;
+                }
+                container.appendChild(btn);
+            });
+        }
+
+        // Render Context Action Buttons
+        function updateQuickActions(room) {
+            const container = document.getElementById('quick-actions');
+            container.innerHTML = "";
+
+            // Movement actions
+            if (room.salidas) {
+                Object.keys(room.salidas).forEach(dir => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left px-3 py-2 bg-retro-border/40 hover:bg-retro-cyan/20 text-retro-cyan border border-retro-cyan/30 rounded text-xs flex justify-between items-center transition-colors";
+                    btn.innerHTML = `<span><i class="fa-solid fa-compass mr-2"></i>Ir al ${dir.toUpperCase()}</span> <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>`;
+                    btn.onclick = () => processCommand(`ir ${dir}`);
+                    container.appendChild(btn);
+                });
+            }
+
+            // Room Objects actions
+            if (room.objetos && room.objetos.length > 0) {
+                room.objetos.forEach(objId => {
+                    const itemData = itemDatabase[objId] || { nombre: objId, icono: 'fa-box' };
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left px-3 py-2 bg-retro-amber/10 hover:bg-retro-amber/20 text-retro-amber border border-retro-amber/30 rounded text-xs flex justify-between items-center transition-colors";
+                    btn.innerHTML = `<span><i class="fa-solid ${itemData.icono} mr-2"></i>Coger ${itemData.nombre}</span> <i class="fa-solid fa-hand-pointer text-xs opacity-50"></i>`;
+                    btn.onclick = () => processCommand(`coger ${objId}`);
+                    container.appendChild(btn);
+                });
+            }
+        }
+
+        // Update Visual Inventory UI
+        function updateInventoryUI() {
+            const container = document.getElementById('inventory-list');
+            const countLabel = document.getElementById('inventory-count');
+            container.innerHTML = "";
+
+            countLabel.innerText = `${inventory.length} objeto${inventory.length !== 1 ? 's' : ''}`;
+
+            if (inventory.length === 0) {
+                container.innerHTML = `<div class="text-xs text-retro-dim italic p-2 text-center">No llevas ningún objeto.</div>`;
+                return;
+            }
+
+            inventory.forEach(objId => {
+                const itemData = itemDatabase[objId] || { nombre: objId, icono: 'fa-box', desc: 'Objeto' };
+                const div = document.createElement('div');
+                div.className = "p-2 bg-black/40 border border-retro-border rounded flex items-center justify-between group hover:border-retro-amber transition-colors";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid ${itemData.icono} text-retro-amber text-sm"></i>
+                        <span class="text-xs text-retro-green font-bold">${itemData.nombre}</span>
+                    </div>
+                    <button onclick="processCommand('mirar ${objId}')" title="Examinar" class="text-xs text-retro-dim hover:text-retro-cyan px-1">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // SVG Fallback Generator for image loading failures
+        function handleImageError(img) {
+            const fallbackType = img.dataset.fallback || "generic";
+            let color = "#33ff57";
+            let title = "ESCENA DE AVENTURA";
+
+            if (fallbackType === 'cave') { color = "#ffb000"; title = "CUEVA PROFUNDA"; }
+            else if (fallbackType === 'library') { color = "#00f0ff"; title = "BIBLIOTECA ANTIGUA"; }
+            else if (fallbackType === 'forest') { color = "#ff007f"; title = "BOSQUE MÍSTICO"; }
+
+            const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400">
+                <rect width="800" height="400" fill="#0c1017"/>
+                <path d="M0 320 L150 200 L300 280 L500 150 L650 250 L800 180 L800 400 L0 400 Z" fill="#151d2a"/>
+                <circle cx="400" cy="120" r="60" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="8 4" opacity="0.4"/>
+                <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="${color}" font-family="monospace" font-size="22" font-weight="bold" letter-spacing="4">${title}</text>
+                <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" fill="#6272a4" font-family="monospace" font-size="12">[ MODO ILUSTRACIÓN VECTORIAL ]</text>
+            </svg>`;
+
+            img.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+        }
+
+        // JSON Narrative Editor Toggle
+        function toggleEditor() {
+            const modal = document.getElementById('editor-modal');
+            const textarea = document.getElementById('json-editor-textarea');
+
+            if (modal.classList.contains('hidden')) {
+                textarea.value = JSON.stringify(world, null, 4);
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Save Narrative from Editor Modal
+        function saveNarrativeJSON() {
+            const textarea = document.getElementById('json-editor-textarea');
+            try {
+                const parsedWorld = JSON.parse(textarea.value);
+                world = parsedWorld;
+                toggleEditor();
+                appendLog("¡El archivo de la historia se ha actualizado con éxito!", "system");
+                renderRoom();
+            } catch (err) {
+                alert("Error de formato JSON: " + err.message);
+            }
+        }
+
+        // Reset Game to Initial State
+        function resetGame() {
+            if (confirm("¿Deseas reiniciar la aventura desde el principio?")) {
+                world = JSON.parse(JSON.stringify(defaultWorld));
+                currentRoomId = "entrada";
+                inventory = [];
+                document.getElementById('terminal').innerHTML = "";
+                appendLog("REINICIANDO AVENTURA...", "system");
+                renderRoom();
+            }
+        }
+    </script>
+</body>
+</html>
